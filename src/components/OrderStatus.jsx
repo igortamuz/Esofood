@@ -2,7 +2,33 @@
 import React, { useState, useEffect } from 'react';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { CheckCircle } from 'lucide-react';
-import { db } from '../firebase';
+import { db, messaging } from '../firebase';
+import { getToken, onMessage } from 'firebase/messaging';
+
+// Função para solicitar permissão e obter o token FCM
+async function requestPermissionAndGetToken(orderId) {
+  console.log('Requesting permission...');
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      console.log('Notification permission granted.');
+      // Obtenha o token de registro do FCM
+      const currentToken = await getToken(messaging, { vapidKey: 'BDI39AGJ5FU6Q2FODK1S3R4T5E6W7Y8U9I0O1P2Q3R4S5T6U7V8W9X0Y1Z2A3B4C5D6E7F8G9H' }); // Substitua com sua VAPID key do Firebase
+      if (currentToken) {
+        console.log('FCM Token:', currentToken);
+        // Salve o token no documento do pedido no Firestore
+        const orderRef = doc(db, 'orders', orderId);
+        await updateDoc(orderRef, { fcmToken: currentToken });
+      } else {
+        console.log('No registration token available. Request permission to generate one.');
+      }
+    } else {
+      console.log('Unable to get permission to notify.');
+    }
+  } catch (error) {
+    console.error('An error occurred while retrieving token. ', error);
+  }
+}
 
 function OrderStatus({ orderId }) {
     const [order, setOrder] = useState(null);
@@ -10,6 +36,9 @@ function OrderStatus({ orderId }) {
     const [showReadyAlert, setShowReadyAlert] = useState(false);
 
     useEffect(() => {
+        // Solicita permissão e obtém o token assim que o componente é montado
+        requestPermissionAndGetToken(orderId);
+
         const orderRef = doc(db, "orders", orderId);
         const unsubscribe = onSnapshot(orderRef, (docSnap) => {
             if (docSnap.exists()) {
@@ -25,7 +54,18 @@ function OrderStatus({ orderId }) {
                 setOrder(null);
             }
         });
-        return () => unsubscribe();
+
+        // Listener para mensagens em primeiro plano (quando o usuário está com a aba aberta)
+        const unsubscribeOnMessage = onMessage(messaging, (payload) => {
+            console.log('Mensagem em primeiro plano recebida:', payload);
+            setShowReadyAlert(true);
+            if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+        });
+
+        return () => {
+            unsubscribe();
+            unsubscribeOnMessage();
+        };
     }, [orderId, order?.status]);
 
     const handleConfirmReceipt = async () => {
@@ -70,7 +110,7 @@ function OrderStatus({ orderId }) {
 
             {showReadyAlert && (
                  <div className="modal-overlay">
-                    <div className="ready-alert-modal">
+                    <div className="modal-content ready-alert-modal">
                         <h3 className="text-4xl font-black mb-4">SEU PEDIDO ESTÁ PRONTO!</h3>
                         <p className="text-xl">Pode retirar seu pedido no balcão.</p>
                         <button onClick={() => setShowReadyAlert(false)} className="ready-alert-close-button">

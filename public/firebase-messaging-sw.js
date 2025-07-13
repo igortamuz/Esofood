@@ -1,4 +1,8 @@
 // public/firebase-messaging-sw.js
+/* eslint-env serviceworker */
+/* eslint-disable no-restricted-globals */ // Desabilita a regra para 'self' apenas neste arquivo
+/* global firebase:readonly */ // Declara 'firebase' como global e readonly
+
 // Importe os scripts do Firebase SDK no Service Worker
 importScripts('https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.1.0/firebase-messaging-compat.js');
@@ -43,4 +47,4 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim()); // Garante que o Service Worker assuma o controle dos clientes imediatamente
 });
 
-console.log('Service Worker: Arquivo carregado.'); // Para confirmar que o SW está sendo lido
+console.log('Service Worker: Arquivo carregado.');

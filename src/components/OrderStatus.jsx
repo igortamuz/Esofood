@@ -1,34 +1,14 @@
-// src/components/OrderStatus.jsx
+// src/components/OrderStatus.jsx (APENAS PARA DEMONSTRAR O POLLING - NÃO É PUSH REAL)
 import React, { useState, useEffect } from 'react';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { CheckCircle } from 'lucide-react';
-import { db, messaging } from '../firebase';
-import { getToken, onMessage } from 'firebase/messaging';
+// import { db, messaging } from '../firebase'; // Remover 'messaging' se não for usar push
+import { db } from '../firebase'; // Mantenha apenas 'db'
+// import { getToken, onMessage } from 'firebase/messaging'; // Remover se não for usar push
 
-// Função para solicitar permissão e obter o token FCM
-async function requestPermissionAndGetToken(orderId) {
-  console.log('Requesting permission...');
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      console.log('Notification permission granted.');
-      // Obtenha o token de registro do FCM
-      const currentToken = await getToken(messaging, { vapidKey: 'BDI39AGJ5FU6Q2FODK1S3R4T5E6W7Y8U9I0O1P2Q3R4S5T6U7V8W9X0Y1Z2A3B4C5D6E7F8G9H' }); // Substitua com sua VAPID key do Firebase
-      if (currentToken) {
-        console.log('FCM Token:', currentToken);
-        // Salve o token no documento do pedido no Firestore
-        const orderRef = doc(db, 'orders', orderId);
-        await updateDoc(orderRef, { fcmToken: currentToken });
-      } else {
-        console.log('No registration token available. Request permission to generate one.');
-      }
-    } else {
-      console.log('Unable to get permission to notify.');
-    }
-  } catch (error) {
-    console.error('An error occurred while retrieving token. ', error);
-  }
-}
+// A função requestPermissionAndGetToken e onMessage seriam removidas ou adaptadas
+// para um cenário de polling puro sem push do servidor.
+// Se você quer apenas polling e notificações locais, não precisaria de getToken ou onMessage aqui.
 
 function OrderStatus({ orderId }) {
     const [order, setOrder] = useState(null);
@@ -36,16 +16,25 @@ function OrderStatus({ orderId }) {
     const [showReadyAlert, setShowReadyAlert] = useState(false);
 
     useEffect(() => {
-        // Solicita permissão e obtém o token assim que o componente é montado
-        requestPermissionAndGetToken(orderId);
-
         const orderRef = doc(db, "orders", orderId);
+
+        // O onSnapshot já é um listener em tempo real e é muito mais eficiente que polling manual.
+        // Ele "ouve" as mudanças no Firestore e atualiza o estado automaticamente.
+        // Se a notificação for gerada por onSnapshot, ela será local.
         const unsubscribe = onSnapshot(orderRef, (docSnap) => {
             if (docSnap.exists()) {
                 const orderData = { id: docSnap.id, ...docSnap.data() };
                 if (order?.status !== 'ready' && orderData.status === 'ready') {
                     setShowReadyAlert(true);
                     if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+                    // Aqui você poderia criar uma notificação local se o service worker estiver registrado
+                    // e tiver permissão, mas sem uma Cloud Function, ela só aparecerá se o app estiver aberto.
+                    if (Notification.permission === 'granted') {
+                        new Notification('Seu pedido está pronto!', {
+                            body: `Seu lanche de ${orderData.combo} está pronto para retirada.`,
+                            icon: '/logo192.png'
+                        });
+                    }
                 }
                 setOrder(orderData);
                 setError(null);
@@ -55,18 +44,18 @@ function OrderStatus({ orderId }) {
             }
         });
 
-        // Listener para mensagens em primeiro plano (quando o usuário está com a aba aberta)
-        const unsubscribeOnMessage = onMessage(messaging, (payload) => {
-            console.log('Mensagem em primeiro plano recebida:', payload);
-            setShowReadyAlert(true);
-            if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
-        });
+        // REMOVA A LÓGICA onMessage SE VOCÊ NÃO FOR USAR PUSH DE SERVIDOR
+        // const unsubscribeOnMessage = onMessage(messaging, (payload) => {
+        //     console.log('Mensagem em primeiro plano recebida:', payload);
+        //     setShowReadyAlert(true);
+        //     if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+        // });
 
         return () => {
             unsubscribe();
-            unsubscribeOnMessage();
+            // unsubscribeOnMessage(); // REMOVA SE NÃO USAR PUSH
         };
-    }, [orderId, order?.status]);
+    }, [orderId, order?.status]); // Mantenha a dependência order?.status para reatividade do alerta
 
     const handleConfirmReceipt = async () => {
         const orderRef = doc(db, "orders", orderId);

@@ -1,8 +1,9 @@
 // public/firebase-messaging-sw.js
 /* eslint-env serviceworker */
-/* eslint-disable no-restricted-globals */ // Desabilita a regra para 'self' apenas neste arquivo
-/* global firebase:readonly */ // Declara 'firebase' como global e readonly
+/* eslint-disable no-restricted-globals */
+/* global firebase:readonly */
 
+// Importe o Firebase JS SDK de forma compatível com Service Worker
 importScripts('https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.1.0/firebase-messaging-compat.js');
 
@@ -15,9 +16,9 @@ const firebaseConfig = {
   appId: "1:528934758817:web:8bb5702db74e4f358d03e0"
 };
 
-firebase.initializeApp(firebaseConfig);
-
-const messaging = firebase.messaging();
+// Inicialize o Firebase no Service Worker
+const app = firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging(app); // Obtenha a instância de messaging
 
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Mensagem em segundo plano recebida:', payload);

@@ -5,7 +5,8 @@ import { signOut } from 'firebase/auth';
 import { LogOut, CheckCircle, Clock } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import OrderList from './OrderList';
-import { db, auth } from '../firebase';
+import { db, auth, functions } from '../firebase'; // Importe 'functions'
+import { httpsCallable } from 'firebase/functions'; // Adicione este import
 
 function EmployeeDashboard({ user }) {
   const [orders, setOrders] = useState([]);
@@ -55,12 +56,16 @@ function EmployeeDashboard({ user }) {
     const orderRef = doc(db, "orders", orderId);
     try {
       await updateDoc(orderRef, { status });
-      // TODO: Se você tiver um backend, aqui é onde seu backend seria notificado para enviar
-      // uma notificação push para o cliente cujo pedido mudou de status para 'ready'.
-      // Isso NÃO é feito diretamente pelo frontend para notificações web push que
-      // devem ser entregues quando o aplicativo está em segundo plano ou fechado.
+
+      if (status === 'ready') {
+        // Chamar uma Cloud Function para enviar a notificação
+        // Esta parte assume que você tem uma Cloud Function chamada 'sendOrderStatusNotification'
+        const sendNotification = httpsCallable(functions, 'sendOrderStatusNotification');
+        await sendNotification({ orderId: orderId, newStatus: status });
+        console.log('Solicitação de notificação enviada para a Cloud Function.');
+      }
     } catch (error) {
-      console.error("Erro ao atualizar status do pedido: ", error);
+      console.error("Erro ao atualizar status do pedido ou enviar notificação: ", error);
     }
   };
 

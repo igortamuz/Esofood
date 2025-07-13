@@ -1,13 +1,81 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+/* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* =========================================
+   * PALETA DE CORES E VARIÁVEIS DE DESIGN
+   * ========================================= */
+
+  /* Cores */
+  --color-gold: #D4AF37;           /* Dourado principal para ações e destaques */
+  --color-gold-hover: #EAC65F;     /* Dourado mais claro para hover */
+  --color-bg: #111111;             /* Fundo principal (preto) */
+  --color-bg-card: #1C1C1C;         /* Fundo para cards e elementos elevados (cinza escuro) */
+  --color-border: #2F2F2F;         /* Cor sutil para bordas e divisórias */
+  --color-text-primary: #CCCCCC;   /* Cor de texto principal (cinza claro) */
+  --color-text-secondary: #888888; /* Cor de texto secundário (cinza médio) */
+  --color-text-title: #FFFFFF;     /* Branco, **exclusivamente** para títulos principais */
+
+  /* Fontes */
+  --font-main: 'Montserrat', sans-serif;
+
+  /* Estilos */
+  --border-radius-main: 10px;
+  --box-shadow-main: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --transition-main: all 0.3s ease-in-out;
+
+  /* =========================================
+   * ESTILOS GLOBAIS (RESET)
+   * ========================================= */
+
+  font-family: var(--font-main);
+  line-height: 1.6;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+#root {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Estilo padrão para todos os botões */
+button {
+  font-family: var(--font-main);
+  font-weight: 600;
+  border-radius: var(--border-radius-main);
+  cursor: pointer;
+  transition: var(--transition-main);
+  border: 1px solid var(--color-border);
+  padding: 12px 24px;
+  font-size: 1rem;
+}
+
+/* Remove o outline padrão e usa um box-shadow para foco */
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-gold);
 }
